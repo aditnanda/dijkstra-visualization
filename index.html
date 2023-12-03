@@ -84,6 +84,26 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
+        .modal-content-small {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 20%;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-content-large {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
         .close {
             color: #aaa;
             float: right;
@@ -125,7 +145,7 @@
             <label for="vertexCount">Jumlah Vertex:</label>
             <input type="number" id="vertexCount" name="vertexCount" min="2" value="3">
             <button type="button" onclick="changeVertexCount()">Inisialisasi</button>
-            <button onclick="resetCanvas()">Reset Canvas</button>
+            <!-- <button onclick="resetCanvas()">Reset Canvas</button> -->
 
         </form>
         <canvas id="canvas" width="600" height="400"></canvas>
@@ -158,8 +178,7 @@
   </div>
 
   <div id="myModal2" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
+    <div class="modal-content-small">
         <div class="button-group">
             <button id="ubahButton" class="modal-button">Ubah</button>
             <button id="hapusButton" class="modal-button" style="background-color: red;">Hapus</button>
@@ -167,26 +186,10 @@
     </div>
   </div>
   
-  <!-- Modal for displaying table with generated data -->
-  <div id="myModal3" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <table>
-            <thead>
-                <tr>
-                    <th>Nama</th>
-                    <th>NRP</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <!-- Data will be populated here -->
-            </tbody>
-        </table>
-    </div>
-</div>
+
 
 <div id="myModalAbout" class="modal">
-    <div class="modal-content">
+    <div class="modal-content-large">
       <div style="text-align: center;">
         <p>Dijkstra Visualization dibuat oleh</p>
         <table>
@@ -260,7 +263,7 @@
           inputValue = newValue; // Menyimpan nilai yang diinput
           modal.style.display = 'none';
         } else {
-          alert('Silakan masukkan nilai yang valid.');
+          showModal('Silakan masukkan nilai yang valid.');
         }
       }
   
@@ -586,7 +589,7 @@
                 }
                 draw();
             } else {
-                alert('Masukkan angka minimal 2 untuk jumlah vertex.');
+                showModal('Masukkan angka minimal 2 untuk jumlah vertex.');
             }
         }
 
@@ -651,7 +654,7 @@
 
         function removeVertex() {
             if (vertices.length === 0) {
-                alert('Tidak ada vertex yang bisa dihapus.');
+                showModal('Tidak ada vertex yang bisa dihapus.');
                 return;
             }
 
@@ -679,7 +682,7 @@
             const edges = ver_edge.edges;
 
             if (nodes.length === 0 || edges.length === 0) {
-                alert('Tidak ada vertex atau edge yang tersedia. Silakan tambahkan vertex dan edge terlebih dahulu.');
+                showModal('Tidak ada vertex atau edge yang tersedia. Silakan tambahkan vertex dan edge terlebih dahulu.');
                 return;
             }
 
@@ -695,7 +698,7 @@
             const endNode = parseInt(document.getElementById('endVertex').value);
 
             if (endNode > nodes.length-1 || startNode < 0) {
-                alert('Vertex Awal tidak boleh kurang dari 0 atau Vertex Akhir tidak boleh lebih dari jumlah Vertex.');
+                showModal('Vertex Awal tidak boleh kurang dari 0 atau Vertex Akhir tidak boleh lebih dari jumlah Vertex.');
                 return;
             }
 
@@ -708,9 +711,9 @@
                         u = i;
                     }
                 }
-
+        
                 visited[u] = true;
-
+        
                 for (let v = 0; v < nodes.length; v++) {
                     if (!visited[v] && edges.some(edge => edge.source === u && edge.target === v)) {
                         const edgeIndex = edges.findIndex(edge => edge.source === u && edge.target === v);
@@ -787,6 +790,13 @@
             console.log("Edges:");
             console.log(edges);
 
+            const data = JSON.stringify({
+                nodes,
+                edges
+            }); // Mendapatkan data dari canvas dalam bentuk string JSON
+            // Menggunakan pywebview API untuk mengirim data ke Python
+            pywebview.api.sendDataToPython(data);
+
             // Jika Anda ingin mengembalikan data untuk digunakan di tempat lain, dapat menggunakan return
             return {
                 nodes,
@@ -798,6 +808,7 @@
 
         draw();
     </script>
+
 </body>
 
 </html>

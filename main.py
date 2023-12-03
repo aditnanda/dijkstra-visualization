@@ -89,6 +89,26 @@ def main():
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
+        .modal-content-small {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 20%;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-content-large {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
         .close {
             color: #aaa;
             float: right;
@@ -130,7 +150,7 @@ def main():
             <label for="vertexCount">Jumlah Vertex:</label>
             <input type="number" id="vertexCount" name="vertexCount" min="2" value="3">
             <button type="button" onclick="changeVertexCount()">Inisialisasi</button>
-            <button onclick="resetCanvas()">Reset Canvas</button>
+            <!-- <button onclick="resetCanvas()">Reset Canvas</button> -->
 
         </form>
         <canvas id="canvas" width="600" height="400"></canvas>
@@ -163,8 +183,7 @@ def main():
   </div>
 
   <div id="myModal2" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
+    <div class="modal-content-small">
         <div class="button-group">
             <button id="ubahButton" class="modal-button">Ubah</button>
             <button id="hapusButton" class="modal-button" style="background-color: red;">Hapus</button>
@@ -172,26 +191,10 @@ def main():
     </div>
   </div>
   
-  <!-- Modal for displaying table with generated data -->
-  <div id="myModal3" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <table>
-            <thead>
-                <tr>
-                    <th>Nama</th>
-                    <th>NRP</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <!-- Data will be populated here -->
-            </tbody>
-        </table>
-    </div>
-</div>
+
 
 <div id="myModalAbout" class="modal">
-    <div class="modal-content">
+    <div class="modal-content-large">
       <div style="text-align: center;">
         <p>Dijkstra Visualization dibuat oleh</p>
         <table>
@@ -227,14 +230,18 @@ def main():
     const modalButtonAbout = document.getElementById('modalButtonAbout');
     const aboutUsModal = document.getElementById('myModalAbout');
 
-    showAboutUsModal();
+    window.addEventListener('pywebviewready', function() {
+        showAboutUsModal();
+
+    })
 
     modalButtonAbout.onclick = function() {
         aboutUsModal.style.display = 'none';
       }
     function showAboutUsModal() {
 
-        aboutUsModal.style.display = 'block';
+        pywebview.api.sendAbout();
+        // aboutUsModal.style.display = 'block';
 
     }
 
@@ -265,7 +272,7 @@ def main():
           inputValue = newValue; // Menyimpan nilai yang diinput
           modal.style.display = 'none';
         } else {
-          alert('Silakan masukkan nilai yang valid.');
+          showModal('Silakan masukkan nilai yang valid.');
         }
       }
   
@@ -591,7 +598,7 @@ def main():
                 }
                 draw();
             } else {
-                alert('Masukkan angka minimal 2 untuk jumlah vertex.');
+                showModal('Masukkan angka minimal 2 untuk jumlah vertex.');
             }
         }
 
@@ -656,7 +663,7 @@ def main():
 
         function removeVertex() {
             if (vertices.length === 0) {
-                alert('Tidak ada vertex yang bisa dihapus.');
+                showModal('Tidak ada vertex yang bisa dihapus.');
                 return;
             }
 
@@ -684,7 +691,7 @@ def main():
             const edges = ver_edge.edges;
 
             if (nodes.length === 0 || edges.length === 0) {
-                alert('Tidak ada vertex atau edge yang tersedia. Silakan tambahkan vertex dan edge terlebih dahulu.');
+                showModal('Tidak ada vertex atau edge yang tersedia. Silakan tambahkan vertex dan edge terlebih dahulu.');
                 return;
             }
 
@@ -700,7 +707,7 @@ def main():
             const endNode = parseInt(document.getElementById('endVertex').value);
 
             if (endNode > nodes.length-1 || startNode < 0) {
-                alert('Vertex Awal tidak boleh kurang dari 0 atau Vertex Akhir tidak boleh lebih dari jumlah Vertex.');
+                showModal('Vertex Awal tidak boleh kurang dari 0 atau Vertex Akhir tidak boleh lebih dari jumlah Vertex.');
                 return;
             }
 
@@ -713,9 +720,9 @@ def main():
                         u = i;
                     }
                 }
-
+        
                 visited[u] = true;
-
+        
                 for (let v = 0; v < nodes.length; v++) {
                     if (!visited[v] && edges.some(edge => edge.source === u && edge.target === v)) {
                         const edgeIndex = edges.findIndex(edge => edge.source === u && edge.target === v);
@@ -792,6 +799,10 @@ def main():
             console.log("Edges:");
             console.log(edges);
 
+            pywebview.api.sendEdgeValue({
+                nodes,
+                edges
+            });
             // Jika Anda ingin mengembalikan data untuk digunakan di tempat lain, dapat menggunakan return
             return {
                 nodes,
@@ -808,11 +819,66 @@ def main():
 </html>
 
     """
+    api = Api()
 
     # Membuat jendela webview dan memuat file HTML
-    webview.create_window('Dijkstra', html=html_content,width=800, height=640)
+    webview.create_window('Dijkstra', html=html_content,width=800, height=650, js_api=api)
     webview.start()
 
+class Api:
+    def sendEdgeValue(self,data):
+        if(len(data['nodes']) != 0):
+            webview.create_window('Hasil Dijkstra', html=f'''
+            <p>{data}</p>
+            ''', width=400, height=200)
+
+    def sendAbout(self):
+        webview.create_window('Tentang Kami', html=
+        '''                      
+        <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+        </style>
+        <div style="text-align: center;">
+        <p><b>Dijkstra Visualization dibuat oleh</b></p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>NRP</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Aditya Nanda Utama</td>
+                    <td>6026231036</td>
+                </tr>
+                <tr>
+                    <td>Airlangga Bayu Satriawan</td>
+                    <td>6026231006</td>
+                </tr>
+                <tr>
+                    <td>Alvin Tarisa Akbar</td>
+                    <td>6026231009</td>
+                </tr>
+            </tbody>
+        </table>
+        <p>Infrastruktur Teknologi Informasi <br><br> <b>Institut Teknologi Sepuluh Nopember</b></p>
+      </div>
+      '''
+      , width=400, height=300)
 
 if __name__ == '__main__':
     main()
