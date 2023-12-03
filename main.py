@@ -1,4 +1,83 @@
 import webview
+from decimal import Decimal
+
+class Vertex:
+    def __init__(self, label: str  = None, weight: int = float("inf"), index: int = None):
+        self.label: str = label
+        self.weight: int = weight
+        self.index: int = index
+
+
+class Graph:
+    def __init__(self, size: int = 10):
+        self.size: int = size
+        self.index: int = 0
+        self.vertices_list: list = [None] * self.size
+        self.vertices: dict = {}
+        self.adjacency_matrix: list = [[None for i in range(self.size)] for j in range(self.size)]
+        self.prev: dict = {}
+        self.visited: dict = {}
+
+    def add_vertex(self, label: str):
+        if self.index == self.size:  # matrix is full
+            return
+        vertex: Vertex = Vertex(label, float("inf"), self.index)
+        self.vertices_list[self.index] = vertex
+        self.vertices[vertex.label] = vertex
+        self.index += 1
+        self.prev[vertex.label] = None
+        self.visited[vertex.label] = False
+
+    def add_edge(self, label1: str, label2: str, weight: int):
+        index1: int = self.vertices[label1].index
+        index2: int = self.vertices[label2].index
+        self.adjacency_matrix[index1][index2] = weight
+
+    def dijkstra(self, label: str):
+        current_vertex: Vertex = self.vertices[label]
+        current_vertex.weight = 0
+        while current_vertex is not None:
+            self.visited[current_vertex.label] = True
+            for i in range(self.index):
+                if self.adjacency_matrix[current_vertex.index][i] is not None:
+                    weight: int = self.adjacency_matrix[current_vertex.index][i]
+                    neighbour: Vertex = self.vertices_list[i]
+                    if current_vertex.weight + weight < neighbour.weight:
+                        neighbour.weight = current_vertex.weight + weight
+                        self.prev[neighbour.label] = current_vertex.label
+            current_vertex = self.find_minimum_weight_vertex()
+
+    def return_path(self, label: str) -> str:
+        if self.prev[label] is None:
+            return label
+        else:
+            return self.return_path(self.prev[label]) + " -> " + label
+
+    def find_minimum_weight_vertex(self):
+        vertex: Vertex = None
+        for label in self.vertices:
+            if not self.visited[label]:
+                if vertex is None:
+                    vertex = self.vertices[label]
+                else:
+                    if vertex.weight > self.vertices[label].weight:
+                        vertex = self.vertices[label]
+        return vertex
+        
+    def hitung_panjang_edge_tercepat(self, label_awal: str, label_akhir: str) -> int:
+        jalur_tercepat = self.return_path(label_akhir)
+        if jalur_tercepat == label_akhir:
+            return 0  # Jika hanya satu vertex, maka panjang edge adalah 0
+
+        jalur_list = jalur_tercepat.split(" -> ")
+        total_bobot = 0
+        for i in range(len(jalur_list) - 1):
+            idx_awal = int(jalur_list[i])
+            idx_akhir = int(jalur_list[i + 1])
+            total_bobot += self.adjacency_matrix[idx_awal][idx_akhir]
+
+        return total_bobot
+
 
 def main():
     # Embedded HTML content
@@ -259,8 +338,10 @@ def main():
         modalInput.style.display = 'block';
         modalButton.style.display = 'block';
       } else {
-        modalInput.style.display = 'none';
-        modalButton.style.display = 'none';
+        //modalInput.style.display = 'none';
+        //modalButton.style.display = 'none';
+
+        return pywebview.api.sendErrorWarning(message);
       }
   
       modal.style.display = 'block';
@@ -799,9 +880,12 @@ def main():
             console.log("Edges:");
             console.log(edges);
 
+            const startNode = parseInt(document.getElementById('startVertex').value);
+            const endNode = parseInt(document.getElementById('endVertex').value);
+
             pywebview.api.sendEdgeValue({
                 nodes,
-                edges
+                edges, start:startNode, end: endNode
             });
             // Jika Anda ingin mengembalikan data untuk digunakan di tempat lain, dapat menggunakan return
             return {
@@ -823,14 +907,45 @@ def main():
 
     # Membuat jendela webview dan memuat file HTML
     webview.create_window('Dijkstra', html=html_content,width=800, height=650, js_api=api)
-    webview.start()
+    webview.start(debug=True)
 
 class Api:
     def sendEdgeValue(self,data):
         if(len(data['nodes']) != 0):
+            graph: Graph = Graph()
+
+            for node in data['nodes']:
+                # print("Node ID:", node['id'])
+                # print("X-coordinate:", node['x'])
+                # print("Y-coordinate:", node['y'])
+                # print("Edges:", node['edges'])
+                # print("-----------------")
+                graph.add_vertex(str(node['id']))
+
+
+            for edge in data['edges']:
+                graph.add_edge(str(edge['source']), str(edge['target']), edge['weight'])
+
+            graph.dijkstra(str(data['start']))
+            panjang_edge_tercepat = graph.hitung_panjang_edge_tercepat(str(data['start']), str(data['end']));
+
+            pathnya = graph.return_path(str(data['end']))
+
+            hasil = "Jalur tercepat dari {} ke {} adalah [{}] dengan jarak {}".format(
+                str(data['start']),
+                str(data['end']),
+                pathnya,
+                str(panjang_edge_tercepat)
+                );
+            
             webview.create_window('Hasil Dijkstra', html=f'''
-            <p>{data}</p>
+            <p>{hasil}</p>
             ''', width=400, height=200)
+
+    def sendErrorWarning(self,data):
+        webview.create_window('Warning!', html=f'''
+            <p>{data}</p>
+            ''', width=400, height=100)
 
     def sendAbout(self):
         webview.create_window('Tentang Kami', html=
@@ -852,11 +967,11 @@ class Api:
         }
         </style>
         <div style="text-align: center;">
-        <p><b>Dijkstra Visualization dibuat oleh</b></p>
+        <p><b>Dijkstra Visualization:</b></p>
         <table>
             <thead>
                 <tr>
-                    <th>Name</th>
+                    <th>Nama</th>
                     <th>NRP</th>
                 </tr>
             </thead>
