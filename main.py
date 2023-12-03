@@ -907,7 +907,7 @@ def main():
 
     # Membuat jendela webview dan memuat file HTML
     webview.create_window('Dijkstra', html=html_content,width=800, height=650, js_api=api)
-    webview.start(debug=True)
+    webview.start()
 
 class Api:
     def sendEdgeValue(self,data):
@@ -941,14 +941,14 @@ class Api:
                 
                 webview.create_window('Hasil Dijkstra', html=f'''
                 <p>{hasil}</p>
-                ''', width=400, height=100)
+                ''', width=400, height=150)
             except:
                 print('Terjadi Kesalahan')
 
     def sendErrorWarning(self,data):
         webview.create_window('Warning!', html=f'''
             <p>{data}</p>
-            ''', width=400, height=100)
+            ''', width=400, height=150)
 
     def sendAbout(self):
         webview.create_window('Tentang Kami', html=
@@ -996,7 +996,7 @@ class Api:
         <p>Infrastruktur Teknologi Informasi <br><br> <b>Institut Teknologi Sepuluh Nopember</b></p>
       </div>
       '''
-      , width=400, height=300)
+      , width=400, height=350)
 
 if __name__ == '__main__':
     main()
