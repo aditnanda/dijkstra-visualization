@@ -926,21 +926,24 @@ class Api:
             for edge in data['edges']:
                 graph.add_edge(str(edge['source']), str(edge['target']), edge['weight'])
 
-            graph.dijkstra(str(data['start']))
-            panjang_edge_tercepat = graph.hitung_panjang_edge_tercepat(str(data['start']), str(data['end']));
+            try:
+                graph.dijkstra(str(data['start']))
+                panjang_edge_tercepat = graph.hitung_panjang_edge_tercepat(str(data['start']), str(data['end']));
 
-            pathnya = graph.return_path(str(data['end']))
+                pathnya = graph.return_path(str(data['end']))
 
-            hasil = "Jalur tercepat dari {} ke {} adalah [{}] dengan jarak {}".format(
-                str(data['start']),
-                str(data['end']),
-                pathnya,
-                str(panjang_edge_tercepat)
-                );
-            
-            webview.create_window('Hasil Dijkstra', html=f'''
-            <p>{hasil}</p>
-            ''', width=400, height=200)
+                hasil = "Jalur tercepat dari {} ke {} adalah [{}] dengan jarak {}".format(
+                    str(data['start']),
+                    str(data['end']),
+                    pathnya,
+                    str(panjang_edge_tercepat)
+                    );
+                
+                webview.create_window('Hasil Dijkstra', html=f'''
+                <p>{hasil}</p>
+                ''', width=400, height=100)
+            except:
+                print('Terjadi Kesalahan')
 
     def sendErrorWarning(self,data):
         webview.create_window('Warning!', html=f'''
