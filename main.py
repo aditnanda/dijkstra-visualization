@@ -36,16 +36,37 @@ class Graph:
     def dijkstra(self, label: str):
         current_vertex: Vertex = self.vertices[label]
         current_vertex.weight = 0
+
+        log_dijkstra ='';
         while current_vertex is not None:
+            print(f"Current Vertex: {current_vertex.label}")
             self.visited[current_vertex.label] = True
+
             for i in range(self.index):
                 if self.adjacency_matrix[current_vertex.index][i] is not None:
                     weight: int = self.adjacency_matrix[current_vertex.index][i]
                     neighbour: Vertex = self.vertices_list[i]
+
+                    nl = neighbour.label
+                    cvw = current_vertex.weight
+                    w = weight
+
+                    print(f"Analisa Vertex terdekat: {neighbour.label}")
+                    print(f"Nilai Vertex saat ini: {current_vertex.weight}, bobot Vertex terdekat: {weight}")
+
                     if current_vertex.weight + weight < neighbour.weight:
                         neighbour.weight = current_vertex.weight + weight
                         self.prev[neighbour.label] = current_vertex.label
+
+                        log_dijkstra += f"Analisa Vertex terdekat: {nl}</br>" + f"Nilai Vertex saat ini: {cvw}, bobot Vertex terdekat: {w}</br>"
+
+                        log_dijkstra += f"Perbarui nilai Vertex {neighbour.label} ke {neighbour.weight}</br></br>"
+
+                        print(f"Perbarui nilai Vertex {neighbour.label} ke {neighbour.weight}")
+
             current_vertex = self.find_minimum_weight_vertex()
+
+        return log_dijkstra;
 
     def return_path(self, label: str) -> str:
         if self.prev[label] is None:
@@ -927,7 +948,7 @@ class Api:
                 graph.add_edge(str(edge['source']), str(edge['target']), edge['weight'])
 
             try:
-                graph.dijkstra(str(data['start']))
+                log_dijkstra = graph.dijkstra(str(data['start']))
                 panjang_edge_tercepat = graph.hitung_panjang_edge_tercepat(str(data['start']), str(data['end']));
 
                 pathnya = graph.return_path(str(data['end']))
@@ -940,8 +961,10 @@ class Api:
                     );
                 
                 webview.create_window('Hasil Dijkstra', html=f'''
+                <h3>Log Perhitungan</h3>
+                <p>{log_dijkstra}</p></br>
                 <p>{hasil}</p>
-                ''', width=400, height=150)
+                ''', width=400, height=400)
             except:
                 print('Terjadi Kesalahan')
 
