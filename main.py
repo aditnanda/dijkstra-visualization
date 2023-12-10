@@ -928,7 +928,7 @@ def main():
 
     # Membuat jendela webview dan memuat file HTML
     webview.create_window('Dijkstra', html=html_content,width=800, height=650, js_api=api)
-    webview.start()
+    webview.start(gui='cef')
 
 class Api:
     def sendEdgeValue(self,data):
