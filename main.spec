@@ -21,7 +21,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='Dijkstra',
+    name='dijkstra',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

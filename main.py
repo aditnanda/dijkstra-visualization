@@ -1,105 +1,6 @@
 import webview
 from decimal import Decimal
 
-class Vertex:
-    def __init__(self, label: str  = None, weight: int = float("inf"), index: int = None):
-        self.label: str = label
-        self.weight: int = weight
-        self.index: int = index
-
-
-class Graph:
-    def __init__(self, size: int = 10):
-        self.size: int = size
-        self.index: int = 0
-        self.vertices_list: list = [None] * self.size
-        self.vertices: dict = {}
-        self.adjacency_matrix: list = [[None for i in range(self.size)] for j in range(self.size)]
-        self.prev: dict = {}
-        self.visited: dict = {}
-
-    def add_vertex(self, label: str):
-        if self.index == self.size:  # matrix is full
-            return
-        vertex: Vertex = Vertex(label, float("inf"), self.index)
-        self.vertices_list[self.index] = vertex
-        self.vertices[vertex.label] = vertex
-        self.index += 1
-        self.prev[vertex.label] = None
-        self.visited[vertex.label] = False
-
-    def add_edge(self, label1: str, label2: str, weight: int):
-        index1: int = self.vertices[label1].index
-        index2: int = self.vertices[label2].index
-        self.adjacency_matrix[index1][index2] = weight
-
-    def dijkstra(self, label: str):
-        current_vertex: Vertex = self.vertices[label]
-        current_vertex.weight = 0
-
-        log_dijkstra ='';
-        while current_vertex is not None:
-            print(f"Current Vertex: {current_vertex.label}")
-            self.visited[current_vertex.label] = True
-
-            for i in range(self.index):
-                if self.adjacency_matrix[current_vertex.index][i] is not None:
-                    weight: int = self.adjacency_matrix[current_vertex.index][i]
-                    neighbour: Vertex = self.vertices_list[i]
-
-                    nl = neighbour.label
-                    cvw = current_vertex.weight
-                    w = weight
-
-                    print(f"Analisa Vertex terdekat: {neighbour.label}")
-                    print(f"Nilai Vertex saat ini: {current_vertex.weight}, bobot Vertex terdekat: {weight}")
-
-                    if current_vertex.weight + weight < neighbour.weight:
-                        neighbour.weight = current_vertex.weight + weight
-                        self.prev[neighbour.label] = current_vertex.label
-
-                        log_dijkstra += f"Analisa Vertex terdekat: {nl}</br>" + f"Nilai Vertex saat ini: {cvw}, bobot Vertex terdekat: {w}</br>"
-
-                        log_dijkstra += f"Perbarui nilai Vertex {neighbour.label} ke {neighbour.weight}</br></br>"
-
-                        print(f"Perbarui nilai Vertex {neighbour.label} ke {neighbour.weight}")
-
-            current_vertex = self.find_minimum_weight_vertex()
-
-        return log_dijkstra;
-
-    def return_path(self, label: str) -> str:
-        if self.prev[label] is None:
-            return label
-        else:
-            return self.return_path(self.prev[label]) + " -> " + label
-
-    def find_minimum_weight_vertex(self):
-        vertex: Vertex = None
-        for label in self.vertices:
-            if not self.visited[label]:
-                if vertex is None:
-                    vertex = self.vertices[label]
-                else:
-                    if vertex.weight > self.vertices[label].weight:
-                        vertex = self.vertices[label]
-        return vertex
-        
-    def hitung_panjang_edge_tercepat(self, label_awal: str, label_akhir: str) -> int:
-        jalur_tercepat = self.return_path(label_akhir)
-        if jalur_tercepat == label_akhir:
-            return 0  # Jika hanya satu vertex, maka panjang edge adalah 0
-
-        jalur_list = jalur_tercepat.split(" -> ")
-        total_bobot = 0
-        for i in range(len(jalur_list) - 1):
-            idx_awal = int(jalur_list[i])
-            idx_akhir = int(jalur_list[i + 1])
-            total_bobot += self.adjacency_matrix[idx_awal][idx_akhir]
-
-        return total_bobot
-
-
 def main():
     # Embedded HTML content
     html_content = """
@@ -787,6 +688,8 @@ def main():
             const distance = [];
             const visited = [];
             const parent = [];
+            let allPaths = [];
+            let dijkstraSteps = [];
 
             const ver_edge = getDataFromCanvas();
             const nodes = ver_edge.nodes;
@@ -815,6 +718,34 @@ def main():
 
             distance[startNode] = 0;
 
+            function findAllPaths(currentNode, currentPath, currentPathValue) {
+                visited[currentNode] = true;
+                currentPath.push(currentNode);
+
+                if (currentNode === endNode) {
+                    allPaths.push({
+                        path: [...currentPath],
+                        totalValue: currentPathValue
+                    });
+                } else {
+                    for (let v = 0; v < nodes.length; v++) {
+                        if (!visited[v] && edges.some(edge => (edge.source === currentNode && edge.target === v) || (edge.source === v && edge.target === currentNode))) {
+                            const edgeIndex = edges.findIndex(edge => (edge.source === currentNode && edge.target === v) || (edge.source === v && edge.target === currentNode));
+                            const edgeValue = edges[edgeIndex].weight;
+
+                            findAllPaths(v, currentPath, currentPathValue + edgeValue);
+                        }
+                    }
+                }
+
+                visited[currentNode] = false;
+                currentPath.pop();
+            }
+
+            findAllPaths(startNode, [], 0);
+
+            displayPathsAndTotalValues(allPaths);
+
             for (let count = 0; count < nodes.length - 1; count++) {
                 let u = -1;
                 for (let i = 0; i < nodes.length; i++) {
@@ -822,12 +753,12 @@ def main():
                         u = i;
                     }
                 }
-        
+
                 visited[u] = true;
-        
+
                 for (let v = 0; v < nodes.length; v++) {
-                    if (!visited[v] && edges.some(edge => edge.source === u && edge.target === v)) {
-                        const edgeIndex = edges.findIndex(edge => edge.source === u && edge.target === v);
+                    if (!visited[v] && edges.some(edge => (edge.source === u && edge.target === v) || (edge.source === v && edge.target === u))) {
+                        const edgeIndex = edges.findIndex(edge => (edge.source === u && edge.target === v) || (edge.source === v && edge.target === u));
                         const weight = edges[edgeIndex].weight;
                         if (distance[u] !== INF && distance[u] + weight < distance[v]) {
                             distance[v] = distance[u] + weight;
@@ -835,7 +766,6 @@ def main():
                         }
                     }
                 }
-
             }
 
             // Menyorot jalur terpendek pada tampilan graf
@@ -866,7 +796,36 @@ def main():
             }
 
 
+        }
 
+        function displayPathsAndTotalValues(paths) {
+            outTemp = [];
+            paths.forEach((path, index) => {
+                outTemp.push({
+                    'path' : `${path.path.map(node => node).join(' -> ')}</br>Nilai = ${path.totalValue}</br></br>`,
+                    'edge_value' : path.totalValue
+                })
+            });
+            let smallestEdgeValue = Infinity;
+            let objectWithSmallestEdgeValue = null;
+
+            for (let i = 0; i < outTemp.length; i++) {
+                if (outTemp[i].edge_value < smallestEdgeValue) {
+                    smallestEdgeValue = outTemp[i].edge_value;
+                    objectWithSmallestEdgeValue = outTemp[i];
+                }
+            }
+
+            console.log('Object dengan edge_value terkecil:', objectWithSmallestEdgeValue);
+            console.log('Log PerhitunganL', outTemp);
+
+            try{
+                pywebview.api.sendEdgeValue({
+                    hasil:objectWithSmallestEdgeValue.path
+                });
+            }catch(e){
+            
+            }
         }
 
         function getDataFromCanvas() {
@@ -904,10 +863,7 @@ def main():
             const startNode = parseInt(document.getElementById('startVertex').value);
             const endNode = parseInt(document.getElementById('endVertex').value);
 
-            pywebview.api.sendEdgeValue({
-                nodes,
-                edges, start:startNode, end: endNode
-            });
+            
             // Jika Anda ingin mengembalikan data untuk digunakan di tempat lain, dapat menggunakan return
             return {
                 nodes,
@@ -923,50 +879,20 @@ def main():
 
 </html>
 
+
     """
     api = Api()
 
     # Membuat jendela webview dan memuat file HTML
     webview.create_window('Dijkstra', html=html_content,width=800, height=650, js_api=api)
-    webview.start()
+    webview.start(debug=True)
 
 class Api:
     def sendEdgeValue(self,data):
-        if(len(data['nodes']) != 0):
-            graph: Graph = Graph()
-
-            for node in data['nodes']:
-                # print("Node ID:", node['id'])
-                # print("X-coordinate:", node['x'])
-                # print("Y-coordinate:", node['y'])
-                # print("Edges:", node['edges'])
-                # print("-----------------")
-                graph.add_vertex(str(node['id']))
-
-
-            for edge in data['edges']:
-                graph.add_edge(str(edge['source']), str(edge['target']), edge['weight'])
-
-            try:
-                log_dijkstra = graph.dijkstra(str(data['start']))
-                panjang_edge_tercepat = graph.hitung_panjang_edge_tercepat(str(data['start']), str(data['end']));
-
-                pathnya = graph.return_path(str(data['end']))
-
-                hasil = "Jalur tercepat dari {} ke {} adalah [{}] dengan jarak {}".format(
-                    str(data['start']),
-                    str(data['end']),
-                    pathnya,
-                    str(panjang_edge_tercepat)
-                    );
-                
-                webview.create_window('Hasil Dijkstra', html=f'''
+        webview.create_window('Hasil Dijkstra', html=f'''
                 <h3>Log Perhitungan</h3>
-                <p>{log_dijkstra}</p>
-                <p>{hasil}</p>
-                ''', width=400, height=400)
-            except:
-                print('Terjadi Kesalahan')
+                <p>{data['hasil']}</p>
+                ''', width=400, height=200)
 
     def sendErrorWarning(self,data):
         webview.create_window('Warning!', html=f'''

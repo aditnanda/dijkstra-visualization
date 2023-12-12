@@ -225,14 +225,18 @@
     const modalButtonAbout = document.getElementById('modalButtonAbout');
     const aboutUsModal = document.getElementById('myModalAbout');
 
-    showAboutUsModal();
+    window.addEventListener('pywebviewready', function() {
+        showAboutUsModal();
+
+    })
 
     modalButtonAbout.onclick = function() {
         aboutUsModal.style.display = 'none';
       }
     function showAboutUsModal() {
 
-        aboutUsModal.style.display = 'block';
+        pywebview.api.sendAbout();
+        // aboutUsModal.style.display = 'block';
 
     }
 
@@ -250,8 +254,10 @@
         modalInput.style.display = 'block';
         modalButton.style.display = 'block';
       } else {
-        modalInput.style.display = 'none';
-        modalButton.style.display = 'none';
+        //modalInput.style.display = 'none';
+        //modalButton.style.display = 'none';
+
+        return pywebview.api.sendErrorWarning(message);
       }
   
       modal.style.display = 'block';
@@ -676,6 +682,8 @@
             const distance = [];
             const visited = [];
             const parent = [];
+            let allPaths = [];
+            let dijkstraSteps = [];
 
             const ver_edge = getDataFromCanvas();
             const nodes = ver_edge.nodes;
@@ -704,6 +712,34 @@
 
             distance[startNode] = 0;
 
+            function findAllPaths(currentNode, currentPath, currentPathValue) {
+                visited[currentNode] = true;
+                currentPath.push(currentNode);
+
+                if (currentNode === endNode) {
+                    allPaths.push({
+                        path: [...currentPath],
+                        totalValue: currentPathValue
+                    });
+                } else {
+                    for (let v = 0; v < nodes.length; v++) {
+                        if (!visited[v] && edges.some(edge => (edge.source === currentNode && edge.target === v) || (edge.source === v && edge.target === currentNode))) {
+                            const edgeIndex = edges.findIndex(edge => (edge.source === currentNode && edge.target === v) || (edge.source === v && edge.target === currentNode));
+                            const edgeValue = edges[edgeIndex].weight;
+
+                            findAllPaths(v, currentPath, currentPathValue + edgeValue);
+                        }
+                    }
+                }
+
+                visited[currentNode] = false;
+                currentPath.pop();
+            }
+
+            findAllPaths(startNode, [], 0);
+
+            displayPathsAndTotalValues(allPaths);
+
             for (let count = 0; count < nodes.length - 1; count++) {
                 let u = -1;
                 for (let i = 0; i < nodes.length; i++) {
@@ -711,12 +747,12 @@
                         u = i;
                     }
                 }
-        
+
                 visited[u] = true;
-        
+
                 for (let v = 0; v < nodes.length; v++) {
-                    if (!visited[v] && edges.some(edge => edge.source === u && edge.target === v)) {
-                        const edgeIndex = edges.findIndex(edge => edge.source === u && edge.target === v);
+                    if (!visited[v] && edges.some(edge => (edge.source === u && edge.target === v) || (edge.source === v && edge.target === u))) {
+                        const edgeIndex = edges.findIndex(edge => (edge.source === u && edge.target === v) || (edge.source === v && edge.target === u));
                         const weight = edges[edgeIndex].weight;
                         if (distance[u] !== INF && distance[u] + weight < distance[v]) {
                             distance[v] = distance[u] + weight;
@@ -724,7 +760,6 @@
                         }
                     }
                 }
-
             }
 
             // Menyorot jalur terpendek pada tampilan graf
@@ -755,7 +790,28 @@
             }
 
 
+        }
 
+        function displayPathsAndTotalValues(paths) {
+            outTemp = [];
+            paths.forEach((path, index) => {
+                outTemp.push({
+                    'path' : `${path.path.map(node => node).join(' -> ')}\nEdge Value = ${path.totalValue}\n\n`,
+                    'edge_value' : path.totalValue
+                })
+            });
+            let smallestEdgeValue = Infinity;
+            let objectWithSmallestEdgeValue = null;
+
+            for (let i = 0; i < outTemp.length; i++) {
+                if (outTemp[i].edge_value < smallestEdgeValue) {
+                    smallestEdgeValue = outTemp[i].edge_value;
+                    objectWithSmallestEdgeValue = outTemp[i];
+                }
+            }
+
+            console.log('Object dengan edge_value terkecil:', objectWithSmallestEdgeValue);
+            console.log('Log PerhitunganL', outTemp);
         }
 
         function getDataFromCanvas() {
@@ -790,13 +846,17 @@
             console.log("Edges:");
             console.log(edges);
 
-            const data = JSON.stringify({
-                nodes,
-                edges
-            }); // Mendapatkan data dari canvas dalam bentuk string JSON
-            // Menggunakan pywebview API untuk mengirim data ke Python
-            pywebview.api.sendDataToPython(data);
+            const startNode = parseInt(document.getElementById('startVertex').value);
+            const endNode = parseInt(document.getElementById('endVertex').value);
 
+            try{
+                pywebview.api.sendEdgeValue({
+                    nodes,
+                    edges, start:startNode, end: endNode
+                });
+            }catch(e){
+
+            }
             // Jika Anda ingin mengembalikan data untuk digunakan di tempat lain, dapat menggunakan return
             return {
                 nodes,
@@ -808,7 +868,6 @@
 
         draw();
     </script>
-
 </body>
 
 </html>
