@@ -149,7 +149,7 @@ def main():
             <button type="button" onclick="showAboutUsModal()">Tentang Kami</button>
 
             <label for="vertexCount">Jumlah Vertex:</label>
-            <input type="number" id="vertexCount" name="vertexCount" min="2" value="3">
+            <input type="number" id="vertexCount" name="vertexCount" min="3" value="3">
             <button type="button" onclick="changeVertexCount()">Inisialisasi</button>
             <!-- <button onclick="resetCanvas()">Reset Canvas</button> -->
 
@@ -165,9 +165,9 @@ def main():
         <p></p>
         <div id="dijkstraInput">
             <label for="startVertex">Vertex Awal:</label>
-            <input type="number" id="startVertex" name="startVertex" value="0">
+            <input type="number" id="startVertex" name="startVertex" value="1">
             <label for="endVertex">Vertex Akhir:</label>
-            <input type="number" id="endVertex" name="endVertex" value="2">
+            <input type="number" id="endVertex" name="endVertex" value="3">
             <button onclick="runDijkstra()">Jalankan Dijkstra</button>
 
         </div>
@@ -469,7 +469,7 @@ def main():
                 }
             }
             for (let i = 0; i < vertices.length; i++) {
-                const label = drawNextVertexLabel(i);
+                const label = drawNextVertexLabel(i+1);
                 drawVertex(vertices[i].x, vertices[i].y, label);
             }
             if (edgeStart !== null && mode === 'edge') {
@@ -582,7 +582,7 @@ def main():
 
         function changeVertexCount() {
             const count = parseInt(document.getElementById('vertexCount').value);
-            document.getElementById('endVertex').value = count - 1;
+            document.getElementById('endVertex').value = count;
 
             if (!isNaN(count) && count >= 2) {
                 vertices = [];
@@ -708,8 +708,8 @@ def main():
 
 
 
-            const startNode = parseInt(document.getElementById('startVertex').value);
-            const endNode = parseInt(document.getElementById('endVertex').value);
+            const startNode = parseInt(document.getElementById('startVertex').value)-1;
+            const endNode = parseInt(document.getElementById('endVertex').value)-1;
 
             if (endNode > nodes.length-1 || startNode < 0) {
                 showModal('Vertex Awal tidak boleh kurang dari 0 atau Vertex Akhir tidak boleh lebih dari jumlah Vertex.');
@@ -802,7 +802,7 @@ def main():
             outTemp = [];
             paths.forEach((path, index) => {
                 outTemp.push({
-                    'path' : `${path.path.map(node => node).join(' -> ')}</br>Nilai = ${path.totalValue}</br></br>`,
+                    'path' : `${path.path.map(node => node +1).join(' -> ')}</br>Nilai = ${path.totalValue}</br></br>`,
                     'edge_value' : path.totalValue
                 })
             });
@@ -860,8 +860,8 @@ def main():
             console.log("Edges:");
             console.log(edges);
 
-            const startNode = parseInt(document.getElementById('startVertex').value);
-            const endNode = parseInt(document.getElementById('endVertex').value);
+            const startNode = parseInt(document.getElementById('startVertex').value)-1;
+            const endNode = parseInt(document.getElementById('endVertex').value)-1;
 
             
             // Jika Anda ingin mengembalikan data untuk digunakan di tempat lain, dapat menggunakan return
